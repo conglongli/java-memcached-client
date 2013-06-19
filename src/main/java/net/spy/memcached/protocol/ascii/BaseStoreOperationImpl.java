@@ -36,16 +36,17 @@ import net.spy.memcached.ops.OperationStatus;
  */
 abstract class BaseStoreOperationImpl extends OperationImpl {
 
-  private static final int OVERHEAD = 32;
+  private static final int OVERHEAD = 40;
   private static final OperationStatus STORED = new OperationStatus(true,
       "STORED");
   protected final String type;
   protected final String key;
   protected final int flags;
   protected final int exp;
+  protected final int cost;
   protected final byte[] data;
 
-  public BaseStoreOperationImpl(String t, String k, int f, int e, byte[] d,
+  public BaseStoreOperationImpl(String t, String k, int f, int e, byte[] d, int c,
       OperationCallback cb) {
     super(cb);
     type = t;
@@ -53,6 +54,7 @@ abstract class BaseStoreOperationImpl extends OperationImpl {
     flags = f;
     exp = e;
     data = d;
+    cost = c;
   }
 
   @Override
@@ -67,7 +69,11 @@ abstract class BaseStoreOperationImpl extends OperationImpl {
   public void initialize() {
     ByteBuffer bb = ByteBuffer.allocate(data.length
         + KeyUtil.getKeyBytes(key).length + OVERHEAD);
-    setArguments(bb, type, key, flags, exp, data.length);
+    if (cost == 0) {
+    	setArguments(bb, type, key, flags, exp, data.length);
+    } else {
+    	setArguments(bb, type, key, flags, exp, data.length, cost);
+    }
     assert bb.remaining() >= data.length + 2 : "Not enough room in buffer,"
         + " need another " + (2 + data.length - bb.remaining());
     bb.put(data);

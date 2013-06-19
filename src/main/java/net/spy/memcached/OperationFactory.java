@@ -205,6 +205,9 @@ public interface OperationFactory {
    */
   StoreOperation store(StoreType storeType, String key, int flags, int exp,
       byte[] data, StoreOperation.Callback cb);
+      
+  StoreOperation store_cost(StoreType storeType, String key, int flags, int exp,
+      byte[] data, int cost, StoreOperation.Callback cb);
 
   /**
    * Resets a keys expiration time.

@@ -309,10 +309,39 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     mconn.enqueueOperation(key, op);
     return rv;
   }
+  
+  private <T> OperationFuture<Boolean> asyncStore_cost(StoreType storeType,
+      String key, int exp, T value, int cost, Transcoder<T> tc) {
+    CachedData co = tc.encode(value);
+    final CountDownLatch latch = new CountDownLatch(1);
+    final OperationFuture<Boolean> rv =
+        new OperationFuture<Boolean>(key, latch, operationTimeout);
+    Operation op = opFact.store_cost(storeType, key, co.getFlags(), exp,
+        co.getData(), cost, new StoreOperation.Callback() {
+            public void receivedStatus(OperationStatus val) {
+              rv.set(val.isSuccess(), val);
+            }
+            public void gotData(String key, long cas) {
+              rv.setCas(cas);
+            }
+
+            public void complete() {
+              latch.countDown();
+            }
+          });
+    rv.setOperation(op);
+    mconn.enqueueOperation(key, op);
+    return rv;
+  }
 
   private OperationFuture<Boolean> asyncStore(StoreType storeType, String key,
       int exp, Object value) {
     return asyncStore(storeType, key, exp, value, transcoder);
+  }
+  
+  private OperationFuture<Boolean> asyncStore_cost(StoreType storeType, String key,
+      int exp, Object value, int cost) {
+    return asyncStore_cost(storeType, key, exp, value, cost, transcoder);
   }
 
   private <T> OperationFuture<Boolean> asyncCat(ConcatenationType catType,
@@ -806,6 +835,11 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       Transcoder<T> tc) {
     return asyncStore(StoreType.set, key, exp, o, tc);
   }
+  
+  public <T> OperationFuture<Boolean> set_cost(String key, int exp, T o, int cost,
+      Transcoder<T> tc) {
+    return asyncStore_cost(StoreType.set, key, exp, o, cost, tc);
+  }
 
   /**
    * Set an object in the cache (using the default transcoder) regardless of any
@@ -840,6 +874,10 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public OperationFuture<Boolean> set(String key, int exp, Object o) {
     return asyncStore(StoreType.set, key, exp, o, transcoder);
+  }
+  
+  public OperationFuture<Boolean> set_cost(String key, int exp, Object o, int cost) {
+    return asyncStore_cost(StoreType.set, key, exp, o, cost, transcoder);
   }
 
   /**

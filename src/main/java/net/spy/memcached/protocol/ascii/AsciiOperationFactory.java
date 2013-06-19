@@ -122,7 +122,12 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 
   public StoreOperation store(StoreType storeType, String key, int flags,
       int exp, byte[] data, StoreOperation.Callback cb) {
-    return new StoreOperationImpl(storeType, key, flags, exp, data, cb);
+    return new StoreOperationImpl(storeType, key, flags, exp, data, 0, cb);
+  }
+  
+  public StoreOperation store_cost(StoreType storeType, String key, int flags,
+      int exp, byte[] data, int cost, StoreOperation.Callback cb) {
+    return new StoreOperationImpl(storeType, key, flags, exp, data, cost, cb);
   }
 
   public KeyedOperation touch(String key, int expiration,
